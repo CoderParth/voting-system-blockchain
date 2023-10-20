@@ -1,0 +1,12 @@
+# Node related
+node_modules/
+
+# Truffle build directory
+/build/
+
+# Environment and secrets
+.env
+
+# System files
+.DS_Store
+Thumbs.db
