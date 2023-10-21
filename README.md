@@ -66,7 +66,7 @@ truffle compile
 truffle test
 ```
 
-1. **Deploy to Sepolia network**:
+3. **Deploy to Sepolia network**:
 
 ```bash
 truffle migrate --network sepolia
