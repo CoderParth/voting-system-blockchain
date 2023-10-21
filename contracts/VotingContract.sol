@@ -11,22 +11,23 @@ contract VotingContract {
 
     struct Voter {
         string name;
-        string voterId; // 8-digit unique string for each voter
+        string voterId;
     }
 
     mapping(uint => Candidate) public candidates;
-    mapping(address => Voter) public voters;
-    mapping(address => bool) public hasVoted;
+    mapping(string => Voter) public voterDetails;
+    mapping(string => bool) public hasVoted;
 
     uint public candidatesCount;
     uint public totalVoters = 0;
 
     // Voted event
-    event votedEvent(uint indexed _candidateId, address indexed _voter);
+    event votedEvent(uint indexed _candidateId, string _candidateName, uint _newVoteCount, address indexed _voter);
 
     constructor() {
-        addCandidate("Candidate 1");
-        addCandidate("Candidate 2");
+        addCandidate("Yama Buddha");
+        addCandidate("Uniq Poet");
+        addCandidate("Balen");
     }
 
     function addCandidate(string memory _name) private {
@@ -35,21 +36,14 @@ contract VotingContract {
     }
 
     function vote(uint _candidateId, string memory _name, string memory _voterId) public {
-        // Require that the voter hasn't voted before
-        require(!hasVoted[msg.sender], "You have already voted.");
-
-        // Store voter details
-        voters[msg.sender] = Voter(_name, _voterId);
-        
-        // Record that the voter has voted
-        hasVoted[msg.sender] = true;
+        require(!hasVoted[_voterId], "You have already voted.");
+         voterDetails[_voterId] = Voter(_name, _voterId);
+        hasVoted[_voterId] = true;
         totalVoters++;
-
-        // Update candidate vote count
         candidates[_candidateId].voteCount++;
 
-        // Trigger voted event
-        emit votedEvent(_candidateId, msg.sender);
+        // Emitting the event with the candidate's name and the new vote count
+        emit votedEvent(_candidateId, candidates[_candidateId].name, candidates[_candidateId].voteCount, msg.sender);
     }
 
     function getCandidate(uint _candidateId) public view returns (uint, string memory, uint) {
@@ -58,5 +52,17 @@ contract VotingContract {
 
     function getTotalVoters() public view returns (uint) {
         return totalVoters;
+    }
+
+    function hasAlreadyVoted(string memory _voterId) public view returns (bool) {
+        return hasVoted[_voterId];
+    }
+
+    function getCandidates() public view returns (Candidate[] memory) {
+        Candidate[] memory allCandidates = new Candidate[](candidatesCount);
+        for (uint i = 1; i <= candidatesCount; i++) {
+            allCandidates[i-1] = candidates[i];
+        }
+        return allCandidates;
     }
 }

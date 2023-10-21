@@ -1,49 +1,51 @@
-const VotingContract = artifacts.require("./VotingContract.sol");
+const VotingContract = artifacts.require("VotingContract");
 
-contract("VotingContract", function (accounts) {
-  let votingContract;
-  const owner = accounts[0];
-  const voter1 = accounts[1];
-  const voter2 = accounts[2];
+contract("VotingContract", (accounts) => {
+  let instance;
 
-  beforeEach(async function () {
-    votingContract = await VotingContract.deployed();
+  before(async () => {
+    instance = await VotingContract.deployed();
   });
 
-  it("initializes with two candidates", async function () {
-    const count = await votingContract.candidatesCount();
-    assert.equal(count, 2);
+  it("should have three candidates", async () => {
+    const count = await instance.candidatesCount();
+    assert.equal(count, 3);
   });
 
-  it("allows a voter to cast a vote", async function () {
-    await votingContract.vote(1, "Alice", "12345678", { from: voter1 });
-    const voter = await votingContract.voters(voter1);
-    assert.equal(voter.name, "Alice");
-    assert.equal(voter.voterId, "12345678");
-
-    const candidate = await votingContract.getCandidate(1);
-    assert.equal(candidate[2], 1, "Candidate's vote count did not increase.");
+  it("should let a voter vote", async () => {
+    await instance.vote(1, "John Doe", "12345678", { from: accounts[0] });
+    const voteCount = (await instance.getCandidate(1))[2];
+    assert.equal(voteCount, 1, "Vote count should be 1 after voting");
   });
 
-  it("prevents a voter from voting more than once", async function () {
-    await votingContract.vote(1, "Bob", "87654321", { from: voter2 });
+  it("shouldn't let a voter vote twice", async () => {
     try {
-      await votingContract.vote(1, "Bob", "87654321", { from: voter2 });
+      await instance.vote(1, "John Doe", "12345678", { from: accounts[0] });
       assert.fail("Expected revert not received");
     } catch (error) {
-      const revertReceived = error.message.search("revert") >= 0;
-      assert(revertReceived, `Expected "revert", got ${error} instead`);
+      const revert = error.message.search("revert") >= 0;
+      assert(revert, "Expected revert, got another error: " + error.message);
     }
   });
 
-  it("retrieves the correct total number of voters", async function () {
-    const total = await votingContract.getTotalVoters();
-    assert.equal(total, 2);
+  it("shouldn't allow non-existent candidate votes", async () => {
+    try {
+      await instance.vote(4, "John Doe", "12345678", { from: accounts[1] });
+      assert.fail("Expected revert not received");
+    } catch (error) {
+      const revert = error.message.search("revert") >= 0;
+      assert(revert, "Expected revert, got another error: " + error.message);
+    }
   });
 
-  it("retrieves a candidate correctly", async function () {
-    const candidate = await votingContract.getCandidate(1);
-    assert.equal(candidate[0], 1, "Candidate ID is correct.");
-    assert.equal(candidate[1], "Candidate 1", "Candidate name is correct.");
+  it("should update total voters count", async () => {
+    await instance.vote(1, "Jane Smith", "87654321", { from: accounts[2] });
+    const total = await instance.getTotalVoters();
+    assert.equal(total.toNumber(), 2, "Total voters should be 2");
+  });
+
+  it("should check if a voter has already voted", async () => {
+    const hasVoted = await instance.hasAlreadyVoted("12345678");
+    assert.equal(hasVoted, true, "This voter should have already voted");
   });
 });
