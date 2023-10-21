@@ -37,7 +37,7 @@ contract VotingContract {
 
     function vote(uint _candidateId, string memory _name, string memory _voterId) public {
         require(!hasVoted[_voterId], "You have already voted.");
-         voterDetails[_voterId] = Voter(_name, _voterId);
+        voterDetails[_voterId] = Voter(_name, _voterId);
         hasVoted[_voterId] = true;
         totalVoters++;
         candidates[_candidateId].voteCount++;
